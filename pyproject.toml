@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rwmap"
+version = "1.1.0"
+description = "一个精简的铁锈战争TMX地图操作工具"
+readme = "README.md"
+authors = [
+    {name = "KEND"},
+]
+license = "GPL-3.0-or-later"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment :: Real Time Strategy",
+    "Typing :: Typed",
+]
+keywords = ["rusted warfare", "tmx"]
+requires-python = ">=3.8"
+dependencies = []  
+
+[project.urls]
+Homepage = "https://github.com/crcXM/RWmap"
+Repository = "https://github.com/crcXM/RWmap.git"
+
+[tool.setuptools.packages.find]
+where = ["src"]
