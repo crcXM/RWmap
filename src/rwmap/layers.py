@@ -34,31 +34,27 @@ class Layer:
         self.offsetx = offsetx
         self.offsety = offsety
         self.properties = properties or []
-        self._data = data[:] if data is not None else [0] * (width * height)
+        self.data = data[:] if data is not None else [0] * (width * height)
 
-    @property
-    def data(self) -> List[int]:
-        return self._data
-
-    def __getitem__(self, key: Tuple[int, int]) -> int:
+    def get_tile(self, key: Tuple[int, int]) -> int:
         x, y = key
         if not (0 <= x < self.width and 0 <= y < self.height):
             raise IndexError(f"坐标 ({x}, {y}) 超出范围")
-        return self._data[y * self.width + x]
+        return self.data[y * self.width + x]
 
-    def __setitem__(self, key: Tuple[int, int], value: int) -> None:
+    def set_tile(self, key: Tuple[int, int], value: int) -> None:
         x, y = key
         if not (0 <= x < self.width and 0 <= y < self.height):
             raise IndexError(f"坐标 ({x}, {y}) 超出范围")
-        self._data[y * self.width + x] = value
+        self.data[y * self.width + x] = value
 
     def __iter__(self) -> Iterator[Tuple[int, int, int]]:
         for y in range(self.height):
             for x in range(self.width):
-                yield x, y, self._data[y * self.width + x]
+                yield x, y, self.data[y * self.width + x]
 
     def fill(self, tile_id: int) -> None:
-        self._data = [tile_id] * (self.width * self.height)
+        self.data = [tile_id] * (self.width * self.height)
 
     def reencode(self, encoding: str, compression: Optional[str] = None) -> 'Layer':
         self.encoding = encoding
@@ -66,20 +62,12 @@ class Layer:
         return self
 
     def encode_data(self) -> bytes:
-        packed = b"".join(struct.pack('i', n) for n in self._data)
+        packed = b"".join(struct.pack('i', n) for n in self.data)
         if self.compression == "gzip":
             packed = gzip.compress(packed)
         elif self.compression == "zlib":
             packed = zlib.compress(packed)
         return packed
-
-    def decode_data(self, data: bytes) -> List[int]:
-        if self.compression == "gzip":
-            data = gzip.decompress(data)
-        elif self.compression == "zlib":
-            data = zlib.decompress(data)
-        fmt = str(self.width * self.height) + 'i'
-        return list(struct.unpack(fmt, data))
 
     @classmethod
     def from_xml(cls, elem: ET.Element) -> 'Layer':
