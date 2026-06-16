@@ -84,14 +84,23 @@ class Map:
         tree = ET.ElementTree(root)
         tree.write(out_path, encoding=encoding, xml_declaration=True)
 
-    def property(self, name: str) -> Property | None:
-        return next((prop for prop in self.properties if prop.name == name), None)
+    def property(self, name: str) -> Property:
+        try:
+            return next(prop for prop in self.properties if prop.name == name)
+        except StopIteration:
+            raise KeyError(f"Property '{name}' not found")
 
-    def layer(self, name: str) -> Layer | None:
-        return next((layer for layer in self.layers if layer.name == name), None)
+    def layer(self, name: str) -> Layer:
+        try:
+            return next((layer for layer in self.layers if layer.name == name))
+        except StopIteration:
+            raise KeyError(f"Layer '{name}' not found")
 
-    def objectgroup(self, name: str) -> ObjectGroup | None:
-        return next((og for og in self.objectgroups if og.name == name), None)
+    def objectgroup(self, name: str) -> ObjectGroup:
+        try:
+            return next((og for og in self.objectgroups if og.name == name))
+        except StopIteration:
+            raise KeyError(f"ObjectGroup '{name}' not found")
 
 
     def get_tileset_by_gid(self, gid: int) -> Optional[Tileset]:

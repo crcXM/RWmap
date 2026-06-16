@@ -105,13 +105,11 @@ def unit_add(
 
 def unit_remove(
     x: float, y: float, width: float, height: float,
-    team: int = 0,
     onlyIfEmpty: bool = False,
     name: Optional[str] = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"remove_{x}_{y}", type="unitRemove", x=x, y=y, width=width, height=height)
-    obj.set(team=team)
     if onlyIfEmpty:
         obj.set(onlyIfEmpty=True)
     for k, v in kwargs.items():

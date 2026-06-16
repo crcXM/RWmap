@@ -51,8 +51,11 @@ class Object:
         self.text = text
         self.properties = properties or []
 
-    def property(self, name: str) -> Property | None:
-        return next((prop for prop in self.properties if prop.name == name), None)
+    def property(self, name: str) -> Property:
+        try:
+            return next(prop for prop in self.properties if prop.name == name)
+        except StopIteration:
+            raise KeyError(f"Property '{name}' not found")
 
     def set(self, **kwargs: Any) -> 'Object':
         for k, v in kwargs.items():
@@ -176,8 +179,11 @@ class ObjectGroup:
         self.offsety = offsety
         self.properties = properties or []
 
-    def property(self, name: str) -> Property | None:
-        return next((prop for prop in self.properties if prop.name == name), None)
+    def property(self, name: str) -> Property:
+        try:
+            return next(prop for prop in self.properties if prop.name == name)
+        except StopIteration:
+            raise KeyError(f"Property '{name}' not found")
 
     def add(self, obj: Object) -> 'ObjectGroup':
         self.objects.append(obj)

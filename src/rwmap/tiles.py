@@ -26,8 +26,11 @@ class Tile:
         self.image_height = image_height
         self.image_trans = image_trans
 
-    def property(self, name: str) -> Property | None:
-        return next((prop for prop in self.properties if prop.name == name), None)
+    def property(self, name: str) -> Property:
+        try:
+            return next(prop for prop in self.properties if prop.name == name)
+        except StopIteration:
+            raise KeyError(f"Property '{name}' not found")
 
     @classmethod
     def from_xml(cls, elem: ET.Element) -> 'Tile':

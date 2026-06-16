@@ -36,8 +36,11 @@ class Layer:
         self.properties = properties or []
         self.data = data[:] if data is not None else [0] * (width * height)
 
-    def property(self, name: str) -> Property | None:
-        return next((prop for prop in self.properties if prop.name == name), None)
+    def property(self, name: str) -> Property:
+        try:
+            return next(prop for prop in self.properties if prop.name == name)
+        except StopIteration:
+            raise KeyError(f"Property '{name}' not found")
 
     def get_tile(self, key: Tuple[int, int]) -> int:
         x, y = key
