@@ -51,15 +51,13 @@ class Object:
         self.text = text
         self.properties = properties or []
 
+    def property(self, name: str) -> Property | None:
+        return next((prop for prop in self.properties if prop.name == name), None)
+
     def set(self, **kwargs: Any) -> 'Object':
         for k, v in kwargs.items():
             self.properties = [p for p in self.properties if p.name != k]
             self.properties.append(Property(k, v))
-        return self
-
-    def add_property(self, name: str, value: Any, type: Optional[str] = None) -> 'Object':
-        self.properties = [p for p in self.properties if p.name != name]
-        self.properties.append(Property(name, value, type))
         return self
 
     def copy_xy_from(self, other: 'Object') -> 'Object':
@@ -177,6 +175,9 @@ class ObjectGroup:
         self.offsetx = offsetx
         self.offsety = offsety
         self.properties = properties or []
+
+    def property(self, name: str) -> Property | None:
+        return next((prop for prop in self.properties if prop.name == name), None)
 
     def add(self, obj: Object) -> 'ObjectGroup':
         self.objects.append(obj)

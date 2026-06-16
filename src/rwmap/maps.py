@@ -1,11 +1,12 @@
 import xml.etree.ElementTree as ET
-from typing import List, Dict, Optional
+from typing import List, Optional
 import os
 
 from .properties import Property
 from .tiles import Tileset, Tile
 from .objects import ObjectGroup
 from .layers import Layer
+
 
 
 class Map:
@@ -22,8 +23,8 @@ class Map:
         self.nextobjectid: int = 1
         self.properties: List[Property] = []
         self.tilesets: List[Tileset] = []
-        self.layers: Dict[str, Layer] = {}
-        self.objectgroups: Dict[str, ObjectGroup] = {}
+        self.layers: List[Layer] = []
+        self.objectgroups: List[ObjectGroup] = []
         if path and os.path.exists(path):
             self.load(path)
 
@@ -44,14 +45,14 @@ class Map:
             for prop_elem in props_elem.findall("property"):
                 self.properties.append(Property.from_xml(prop_elem))
         self.tilesets = [Tileset.from_xml(ts_elem) for ts_elem in root.findall("tileset")]
-        self.layers = {}
+        self.layers = []
         for layer_elem in root.findall("layer"):
             layer = Layer.from_xml(layer_elem)
-            self.layers[layer.name] = layer
-        self.objectgroups = {}
+            self.layers.append(layer)
+        self.objectgroups = []
         for og_elem in root.findall("objectgroup"):
             og = ObjectGroup.from_xml(og_elem)
-            self.objectgroups[og.name] = og
+            self.objectgroups.append(og)
         return self
 
     def save(self, path: Optional[str] = None, encoding: str = "utf-8", indent: Optional[int] = None) -> None:
@@ -74,30 +75,24 @@ class Map:
                 prop.to_xml(props_elem)
         for ts in self.tilesets:
             root.append(ts.to_xml())
-        for layer in self.layers.values():
+        for layer in self.layers:
             root.append(layer.to_xml())
-        for og in self.objectgroups.values():
+        for og in self.objectgroups:
             root.append(og.to_xml())
         if indent is not None:
             ET.indent(root, space=" " * indent)
         tree = ET.ElementTree(root)
         tree.write(out_path, encoding=encoding, xml_declaration=True)
 
-    def layer(self, name: str) -> Layer:
-        if name not in self.layers:
-            raise KeyError(f"Layer '{name}' not found")
-        return self.layers[name]
+    def property(self, name: str) -> Property | None:
+        return next((prop for prop in self.properties if prop.name == name), None)
 
-    def objectgroup(self, name: str) -> ObjectGroup:
-        if name not in self.objectgroups:
-            raise KeyError(f"ObjectGroup '{name}' not found")
-        return self.objectgroups[name]
+    def layer(self, name: str) -> Layer | None:
+        return next((layer for layer in self.layers if layer.name == name), None)
 
-    def add_objectgroup(self, group: ObjectGroup) -> None:
-        self.objectgroups[group.name] = group
+    def objectgroup(self, name: str) -> ObjectGroup | None:
+        return next((og for og in self.objectgroups if og.name == name), None)
 
-    def remove_objectgroup(self, name: str) -> None:
-        self.objectgroups.pop(name, None)
 
     def get_tileset_by_gid(self, gid: int) -> Optional[Tileset]:
         for ts in self.tilesets:
@@ -134,5 +129,5 @@ class Map:
         m.tileheight = tile_size
         if layer_names:
             for name in layer_names:
-                m.layers[name] = Layer(name, width, height)
+                m.layers.append(Layer(name, width, height))
         return m

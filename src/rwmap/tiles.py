@@ -26,10 +26,8 @@ class Tile:
         self.image_height = image_height
         self.image_trans = image_trans
 
-    def set_property(self, name: str, value: Any, type: Optional[str] = None) -> 'Tile':
-        self.properties = [p for p in self.properties if p.name != name]
-        self.properties.append(Property(name, value, type))
-        return self
+    def property(self, name: str) -> Property | None:
+        return next((prop for prop in self.properties if prop.name == name), None)
 
     @classmethod
     def from_xml(cls, elem: ET.Element) -> 'Tile':
@@ -106,6 +104,9 @@ class Tileset:
         self.is_image_collection = is_image_collection
         self.properties = properties or []
         self.tiles: Dict[int, Tile] = {}
+
+    def property(self, name: str) -> Property | None:
+        return next((prop for prop in self.properties if prop.name == name), None)
 
     def add_tile(self, tile: Tile) -> 'Tileset':
         self.tiles[tile.id] = tile

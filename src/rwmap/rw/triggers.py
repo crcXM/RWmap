@@ -1,8 +1,7 @@
-import xml.etree.ElementTree as ET
 from typing import List, Optional, Union, Any
 
 from ..properties import Property
-from ..objects import Shape, Object, ObjectGroup
+from ..objects import Shape, Object
 from .units import UnitSpec
 
 
@@ -65,52 +64,3 @@ class Trigger(Object):
 
     def all_to_activate(self, value: bool) -> 'Trigger':
         return self.set(allToActivate=value)
-
-
-class TriggerLayer(ObjectGroup):
-
-    def __init__(
-        self,
-        triggers: Optional[List[Trigger]] = None,
-        color: Optional[str] = None,
-        opacity: float = 1.0,
-        visible: bool = True,
-        offsetx: float = 0.0,
-        offsety: float = 0.0,
-        properties: Optional[List[Property]] = None,
-    ):
-        super().__init__(
-            name="Triggers",
-            objects=triggers if triggers is not None else [],# type: ignore
-            color=color,
-            opacity=opacity,
-            visible=visible,
-            offsetx=offsetx,
-            offsety=offsety,
-            properties=properties,
-        )
-
-    def add(self, trigger: Trigger) -> 'TriggerLayer':# type: ignore
-        super().add(trigger)
-        return self
-
-    def extend(self, triggers: List[Trigger]) -> 'TriggerLayer':# type: ignore
-        super().extend(triggers)# type: ignore
-        return self
-
-    @property
-    def triggers(self) -> List[Trigger]:
-        return self.objects  # type: ignore
-
-    @classmethod
-    def from_xml(cls, elem: ET.Element) -> 'TriggerLayer':
-        og = ObjectGroup.from_xml(elem)
-        return cls(
-            triggers=og.objects,  # type: ignore
-            color=og.color,
-            opacity=og.opacity,
-            visible=og.visible,
-            offsetx=og.offsetx,
-            offsety=og.offsety,
-            properties=og.properties,
-        )
