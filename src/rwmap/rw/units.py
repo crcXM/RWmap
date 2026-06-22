@@ -91,7 +91,3 @@ class UnitSpec:
         new_spec.attrs = self.attrs.copy()
         new_spec._count = count
         return new_spec
-
-
-def unit(name: str) -> UnitSpec:
-    return UnitSpec(name)

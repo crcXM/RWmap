@@ -1,6 +1,6 @@
 from .rwmaps import RwMap
 from .triggers import Trigger
-from .units import UnitSpec, unit
+from .units import UnitSpec
 from .factories import (
     map_info, team_info, unit_detect, unit_add, unit_remove,
     map_text, point, move, rotate, change_credits, basic, objective,
@@ -9,7 +9,7 @@ from .factories import (
 
 
 __all__ = [
-    "unit", "UnitSpec",
+    "UnitSpec",
     "Trigger", "RwMap",
     "map_info", "team_info", "unit_detect", "unit_add", "unit_remove",
     "map_text", "point", "move", "rotate", "change_credits",
