@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rwmap"
-version = "3.2.4"
+version = "4.2.4"
 description = "一个精简的铁锈战争TMX地图操作工具"
 readme = "README.md"
 authors = [
