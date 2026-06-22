@@ -1,11 +1,11 @@
-from typing import Dict, Optional, Union, Any
+from typing import Any
 
 
 class UnitSpec:
 
     def __init__(self, name: str):
         self.name: str = name
-        self.attrs: Dict[str, Optional[Union[bool, int, float, str]]] = {}
+        self.attrs: dict[str, bool | int | float | str | None] = {}
         self._count: int = 1
 
     @property

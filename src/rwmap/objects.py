@@ -1,11 +1,11 @@
 import xml.etree.ElementTree as ET
-from typing import List, Dict, Optional, Any, Tuple
+from typing import Any
 
-from .properties import Property
+from .properties import properties_from_xml, properties_to_xml
 
 class Shape:
 
-    def __init__(self, type: str, points: Optional[List[Tuple[int, int]]] = None):
+    def __init__(self, type: str, points: list[tuple[int, int]] | None = None):
         self.type = type
         self.points = points
 
@@ -31,11 +31,11 @@ class Object:
         height: float = 1,
         rotation: float = 0,
         visible: bool = True,
-        shape: Optional[Shape] = None,
-        gid: Optional[int] = None,
-        text: Optional[str] = None,
-        properties: Optional[List[Property]] = None,
-        id: Optional[int] = None,
+        shape: Shape | None = None,
+        gid: int | None = None,
+        text: str | None = None,
+        properties: dict[str, Any] = {},
+        id: int | None = None,
     ):
         self.id = id
         self.name = name
@@ -49,18 +49,11 @@ class Object:
         self.shape = shape
         self.gid = gid
         self.text = text
-        self.properties = properties or []
-
-    def property(self, name: str) -> Property:
-        try:
-            return next(prop for prop in self.properties if prop.name == name)
-        except StopIteration:
-            raise KeyError(f"Property '{name}' not found")
+        self.properties = properties
 
     def set(self, **kwargs: Any) -> 'Object':
         for k, v in kwargs.items():
-            self.properties = [p for p in self.properties if p.name != k]
-            self.properties.append(Property(k, v))
+            self.properties[k] = v
         return self
 
     def copy_xy_from(self, other: 'Object') -> 'Object':
@@ -92,7 +85,7 @@ class Object:
             height=float(elem.get("height", 1)),
             rotation=float(elem.get("rotation", 0)),
             visible=elem.get("visible", "1") != "0",
-            gid=int(elem.get("gid")) if elem.get("gid") else None, #type: ignore
+            gid=int(elem.get("gid") or 0) if elem.get("gid") else None, 
         )
         shape_elem = None
         for shape_tag in ["point", "ellipse", "polygon", "polyline"]:
@@ -108,7 +101,7 @@ class Object:
                 obj.shape = Shape("ellipse")
             elif tag in ("polygon", "polyline"):
                 points_str = shape_elem.get("points", "")
-                points: List[Tuple[int, int]] = []
+                points: list[tuple[int, int]] = []
                 if points_str:
                     for pair in points_str.split():
                         if ',' in pair:
@@ -118,14 +111,11 @@ class Object:
         text_elem = elem.find("text")
         if text_elem is not None:
             obj.text = text_elem.text or ""
-        props_elem = elem.find("properties")
-        if props_elem is not None:
-            for prop_elem in props_elem.findall("property"):
-                obj.properties.append(Property.from_xml(prop_elem))
+        obj.properties = properties_from_xml(elem.find("properties"))
         return obj
 
     def to_xml(self) -> ET.Element:
-        attrs: Dict[str, str] = {}
+        attrs: dict[str, str] = {}
         if self.id is not None:
             attrs["id"] = str(self.id)
         if self.name:
@@ -151,9 +141,7 @@ class Object:
             text_elem = ET.SubElement(elem, "text")
             text_elem.text = self.text
         if self.properties:
-            props_elem = ET.SubElement(elem, "properties")
-            for prop in self.properties:
-                prop.to_xml(props_elem)
+            elem.append(properties_to_xml(self.properties))
         return elem
 
 
@@ -162,13 +150,13 @@ class ObjectGroup:
     def __init__(
         self,
         name: str = "",
-        objects: Optional[List[Object]] = None,
-        color: Optional[str] = None,
+        objects: list[Object] | None = None,
+        color: str | None = None,
         opacity: float = 1.0,
         visible: bool = True,
         offsetx: float = 0.0,
         offsety: float = 0.0,
-        properties: Optional[List[Property]] = None,
+        properties: dict[str, Any] = {},
     ):
         self.name = name
         self.objects = objects or []
@@ -177,19 +165,13 @@ class ObjectGroup:
         self.visible = visible
         self.offsetx = offsetx
         self.offsety = offsety
-        self.properties = properties or []
-
-    def property(self, name: str) -> Property:
-        try:
-            return next(prop for prop in self.properties if prop.name == name)
-        except StopIteration:
-            raise KeyError(f"Property '{name}' not found")
+        self.properties = properties
 
     def add(self, obj: Object) -> 'ObjectGroup':
         self.objects.append(obj)
         return self
 
-    def extend(self, objs: List[Object]) -> 'ObjectGroup':
+    def extend(self, objs: list[Object]) -> 'ObjectGroup':
         self.objects.extend(objs)
         return self
 
@@ -202,7 +184,7 @@ class ObjectGroup:
         self.objects.clear()
         return self
 
-    def find(self, name: str = None, type: str = None, id: int = None) -> Optional[Object]: #type: ignore
+    def find(self, name: str | None = None, type: str | None = None, id: int | None = None) -> Object | None:
         for obj in self.objects:
             if name is not None and obj.name != name:
                 continue
@@ -213,16 +195,10 @@ class ObjectGroup:
             return obj
         return None
 
-    def find_all(self, name: str = None, type: str = None) -> List[Object]: #type: ignore
+    def find_all(self, name: str | None = None, type: str | None = None) -> list[Object]:
         return [obj for obj in self.objects
                 if (name is None or obj.name == name) and
                    (type is None or obj.type == type)]
-
-    def set(self, **kwargs: Any) -> 'ObjectGroup':
-        for k, v in kwargs.items():
-            self.properties = [p for p in self.properties if p.name != k]
-            self.properties.append(Property(k, v))
-        return self
 
     @classmethod
     def from_xml(cls, elem: ET.Element) -> 'ObjectGroup':
@@ -236,10 +212,7 @@ class ObjectGroup:
         )
         for obj_elem in elem.findall("object"):
             og.objects.append(Object.from_xml(obj_elem))
-        props_elem = elem.find("properties")
-        if props_elem is not None:
-            for prop_elem in props_elem.findall("property"):
-                og.properties.append(Property.from_xml(prop_elem))
+        og.properties = properties_from_xml(elem.find("properties"))
         return og
 
     def to_xml(self) -> ET.Element:
@@ -256,9 +229,7 @@ class ObjectGroup:
             attrs["offsety"] = str(self.offsety)
         elem = ET.Element("objectgroup", attrs)
         if self.properties:
-            props_elem = ET.SubElement(elem, "properties")
-            for prop in self.properties:
-                prop.to_xml(props_elem)
+            elem.append(properties_to_xml(self.properties))
         for obj in self.objects:
             elem.append(obj.to_xml())
         return elem

@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
-from typing import List, Dict, Optional, Any
+from typing import Any
 
-from .properties import Property
+from .properties import properties_from_xml, properties_to_xml
 
 
 class Tile:
@@ -9,16 +9,16 @@ class Tile:
     def __init__(
         self,
         id: int,
-        properties: Optional[List[Property]] = None,
-        terrain: Optional[str] = None,
-        probability: Optional[float] = None,
-        image: Optional[str] = None,
-        image_width: Optional[int] = None,
-        image_height: Optional[int] = None,
-        image_trans: Optional[str] = None,
+        properties: dict[str, Any] = {},
+        terrain: str | None = None,
+        probability: float | None = None,
+        image: str | None = None,
+        image_width: int | None = None,
+        image_height: int | None = None,
+        image_trans: str | None = None,
     ):
         self.id = id
-        self.properties = properties or []
+        self.properties = properties
         self.terrain = terrain
         self.probability = probability
         self.image = image
@@ -26,20 +26,11 @@ class Tile:
         self.image_height = image_height
         self.image_trans = image_trans
 
-    def property(self, name: str) -> Property:
-        try:
-            return next(prop for prop in self.properties if prop.name == name)
-        except StopIteration:
-            raise KeyError(f"Property '{name}' not found")
-
     @classmethod
     def from_xml(cls, elem: ET.Element) -> 'Tile':
         tile_id = int(elem.get("id", 0))
         tile = cls(id=tile_id)
-        props_elem = elem.find("properties")
-        if props_elem is not None:
-            for prop_elem in props_elem.findall("property"):
-                tile.properties.append(Property.from_xml(prop_elem))
+        tile.properties = properties_from_xml(elem.find("properties"))
         tile.terrain = elem.get("terrain")
         prob = elem.get("probability")
         if prob:
@@ -60,9 +51,7 @@ class Tile:
             attrs["probability"] = str(self.probability)
         elem = ET.Element("tile", attrs)
         if self.properties:
-            props_elem = ET.SubElement(elem, "properties")
-            for prop in self.properties:
-                prop.to_xml(props_elem)
+            elem.append(properties_to_xml(self.properties))
         if self.image:
             img_attrs = {"source": self.image}
             if self.image_width:
@@ -85,13 +74,13 @@ class Tileset:
         tileheight: int = 1,
         tilecount: int = 0,
         columns: int = 0,
-        source: Optional[str] = None,
-        image: Optional[str] = None,
-        image_width: Optional[int] = None,
-        image_height: Optional[int] = None,
-        image_trans: Optional[str] = None,
+        source: str | None = None,
+        image: str | None = None,
+        image_width: int | None = None,
+        image_height: int | None = None,
+        image_trans: str | None = None,
         is_image_collection: bool = False,
-        properties: Optional[List[Property]] = None,
+        properties: dict[str, Any] = {},
     ):
         self.firstgid = firstgid
         self.name = name
@@ -105,17 +94,14 @@ class Tileset:
         self.image_height = image_height
         self.image_trans = image_trans
         self.is_image_collection = is_image_collection
-        self.properties = properties or []
-        self.tiles: Dict[int, Tile] = {}
-
-    def property(self, name: str) -> Property | None:
-        return next((prop for prop in self.properties if prop.name == name), None)
+        self.properties = properties
+        self.tiles: dict[int, Tile] = {}
 
     def add_tile(self, tile: Tile) -> 'Tileset':
         self.tiles[tile.id] = tile
         return self
 
-    def get_tile(self, gid: int) -> Optional[Tile]:
+    def get_tile(self, gid: int) -> Tile | None:
         local_id = gid - self.firstgid
         return self.tiles.get(local_id)
 
@@ -138,10 +124,7 @@ class Tileset:
             ts.image_width = int(img_elem.get("width", 0)) if img_elem.get("width") else None
             ts.image_height = int(img_elem.get("height", 0)) if img_elem.get("height") else None
             ts.image_trans = img_elem.get("trans")
-        props_elem = elem.find("properties")
-        if props_elem is not None:
-            for prop_elem in props_elem.findall("property"):
-                ts.properties.append(Property.from_xml(prop_elem))
+        ts.properties = properties_from_xml(elem.find("properties"))
         has_tiles_with_images = False
         for tile_elem in elem.findall("tile"):
             tile = Tile.from_xml(tile_elem)
@@ -167,9 +150,7 @@ class Tileset:
             attrs["columns"] = str(self.columns)
         elem = ET.Element("tileset", attrs)
         if self.properties:
-            props_elem = ET.SubElement(elem, "properties")
-            for prop in self.properties:
-                prop.to_xml(props_elem)
+            elem.append(properties_to_xml(self.properties))
         if self.image and not self.is_image_collection:
             img_attrs = {"source": self.image}
             if self.image_width:

@@ -1,5 +1,3 @@
-from typing import List, Optional, Union, Tuple
-
 from .triggers import Trigger, Shape
 from .units import UnitSpec
 
@@ -19,7 +17,7 @@ def team_info(
     credits: int = 0,
     allyGroup: int = 0,
     disabledAI: bool = False,
-    lockAiDifficulty: Optional[int] = None,
+    lockAiDifficulty: int | None = None,
     ai: str = "",
     basicAI: bool = False,
     **kwargs
@@ -45,18 +43,18 @@ def team_info(
 
 def unit_detect(
     x: float, y: float,
-    name: Optional[str] = None,
+    name: str | None = None,
     width: float = 20,
     height: float = 20,
     rotation: float = 0.0,
-    shape: Optional[str] = None,
-    polygon_points: Optional[List[Tuple[int, int]]] = None,
-    minUnits: Optional[int] = None,
-    maxUnits: Optional[int] = None,
-    unitType: Optional[str] = None,
+    shape: str | None = None,
+    polygon_points: list[tuple[int, int]] | None = None,
+    minUnits: int | None = None,
+    maxUnits: int | None = None,
+    unitType: str | None = None,
     **kwargs
 ) -> Trigger:
-    shape_obj: Optional[Shape] = None
+    shape_obj: Shape | None = None
     if shape == "point":
         shape_obj = Shape("point")
     elif shape == "ellipse":
@@ -87,8 +85,8 @@ def unit_detect(
 def unit_add(
     x: float, y: float,
     team: int = -1,
-    spawnUnits: Optional[Union[str, UnitSpec]] = None,
-    name: Optional[str] = None,
+    spawnUnits: str | UnitSpec | None = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"add_{x}_{y}", type="unitAdd", x=x, y=y)
@@ -106,7 +104,7 @@ def unit_add(
 def unit_remove(
     x: float, y: float, width: float, height: float,
     onlyIfEmpty: bool = False,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"remove_{x}_{y}", type="unitRemove", x=x, y=y, width=width, height=height)
@@ -122,7 +120,7 @@ def map_text(
     text: str,
     color: str = "white",
     size: int = 12,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"text_{x}_{y}", type="mapText", x=x, y=y)
@@ -147,7 +145,7 @@ def move(
     x: float, y: float,
     target: str,
     unload: bool = False,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"move_{x}_{y}", type="move", x=x, y=y)
@@ -162,7 +160,7 @@ def move(
 def rotate(
     x: float, y: float,
     dir: float,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"rotate_{x}_{y}", type="rotate", x=x, y=y)
@@ -175,9 +173,9 @@ def rotate(
 def change_credits(
     x: float, y: float,
     team: int,
-    add: Optional[int] = None,
-    set: Optional[int] = None,
-    name: Optional[str] = None,
+    add: int | None = None,
+    set: int | None = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"credits_{x}_{y}", type="changeCredits", x=x, y=y)
@@ -193,7 +191,7 @@ def change_credits(
 
 def basic(
     x: float, y: float,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"basic_{x}_{y}", type="basic", x=x, y=y)
@@ -215,8 +213,8 @@ def objective(
 
 def camera_start(
     x: float, y: float,
-    zoomTo: Optional[int] = None,
-    name: Optional[str] = None,
+    zoomTo: int | None = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or "camera_start", type="camera_start", x=x, y=y)
@@ -231,7 +229,7 @@ def fall(
     x: float, y: float,
     width: float = 20,
     height: float = 20,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"fall_{x}_{y}", type="fall", x=x, y=y, width=width, height=height)
@@ -244,7 +242,7 @@ def set_team(
     x: float, y: float,
     width: float, height: float,
     team: int,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"set_team_{x}_{y}", type="set_team", x=x, y=y, width=width, height=height)
@@ -257,7 +255,7 @@ def set_team(
 def ai_allow_full_use(
     x: float, y: float,
     width: float, height: float,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     obj = Trigger(name=name or f"ai_{x}_{y}", type="ai_allow_full_use", x=x, y=y, width=width, height=height)
@@ -268,9 +266,9 @@ def ai_allow_full_use(
 
 def unit_info(
     x: float, y: float,
-    unit: Union[str, UnitSpec],
+    unit: str | UnitSpec,
     team: int = -1,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs
 ) -> Trigger:
     unit_str = str(unit) if isinstance(unit, UnitSpec) else unit

@@ -1,70 +1,56 @@
+from typing import Any
 import xml.etree.ElementTree as ET
 
-from typing import Optional, Any
 
-class Property:
-
-    def __init__(
-        self,
-        name: str,
-        value: Any = None,
-        type: Optional[str] = None,
-        text: Optional[str] = None
-    ):
-        self.name = name
-        self.value = value
-        self.text = text
-        if type is not None:
-            self.type = type
-        elif value is not None:
-            if isinstance(value, bool):
-                self.type = "bool"
-            elif isinstance(value, int):
-                self.type = "int"
-            elif isinstance(value, float):
-                self.type = "float"
-            else:
-                self.type = "string"
+def property_to_xml(name: str, value: Any) -> ET.Element:
+    attrs = {"name": name}
+    
+    if isinstance(value, str):
+        if value.startswith("\n"):
+            attrs["text"] = value
         else:
-            self.type = "string"
-
-    def to_xml(self, parent: ET.Element) -> None:
-        attrs = {"name": self.name}
-        if self.type != "string":
-            attrs["type"] = self.type
-        if self.value is not None:
-            if self.type == "bool":
-                val = "true" if self.value else "false"
-            elif self.type in ("int", "float"):
-                val = str(self.value)
-            else:
-                val = str(self.value)
-            attrs["value"] = val
-            ET.SubElement(parent, "property", attrs)
-        elif self.text is not None:
-            elem = ET.SubElement(parent, "property", attrs)
-            elem.text = self.text
-        else:
-            ET.SubElement(parent, "property", attrs)
-
-    @classmethod
-    def from_xml(cls, elem: ET.Element) -> 'Property':
-        name = elem.get("name", "")
-        value = elem.get("value")
-        typ = elem.get("type", "string")
-        text = elem.text.strip() if elem.text else None
+            attrs["value"] = value
+    elif isinstance(value, bool):
+        attrs["type"] = "bool"
+        attrs["value"] = "true" if value else "false"
+    elif isinstance(value, int):
+        attrs["type"] = "int"
+        attrs["value"] = str(value)
+    elif isinstance(value, float):
+        attrs["type"] = "float"
+        attrs["value"] = str(value)
+    else:
         if value is not None:
-            if typ == "bool":
-                val = value.lower() == "true"
-            elif typ == "int":
-                val = int(value)
-            elif typ == "float":
-                val = float(value)
-            else:
-                val = value
-            return cls(name, val, typ)
-        elif text is not None:
-            return cls(name, text=text, type=typ)
-        else:
-            return cls(name)
+            attrs["value"] = str(value)
+    
+    return ET.Element("property", attrs)
 
+
+def property_from_xml(elem: ET.Element) -> tuple[str, Any]:
+    name = elem.get("name", "")
+    raw = elem.get("value") or (elem.text or "").strip() or None
+    if raw is None:
+        return (name, None)
+    
+    typ = elem.get("type", "string")
+    if typ == "bool":
+        val = raw.lower() == "true"
+    elif typ == "int":
+        val = int(raw)
+    elif typ == "float":
+        val = float(raw)
+    else:
+        val = raw
+    return (name, val)
+
+
+def properties_to_xml(properties: dict[str, str]) -> ET.Element:
+    elem = ET.Element("properties")
+    for name, value in properties.items():
+        elem.append(property_to_xml(name, value))
+    return elem
+
+def properties_from_xml(elem: ET.Element | None) -> dict[str, str]:
+    if elem == None:
+        return {}
+    return dict(property_from_xml(prop) for prop in elem.findall("property"))

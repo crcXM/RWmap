@@ -1,8 +1,8 @@
+from typing import Any
 import xml.etree.ElementTree as ET
-from typing import List, Optional
 import os
 
-from .properties import Property
+from .properties import properties_from_xml, properties_to_xml
 from .tiles import Tileset, Tile
 from .objects import ObjectGroup
 from .layers import Layer
@@ -11,7 +11,7 @@ from .layers import Layer
 
 class Map:
 
-    def __init__(self, path: Optional[str] = None):
+    def __init__(self, path: str | None = None):
         self.path = path
         self.version: str = "1.2"
         self.orientation: str = "orthogonal"
@@ -21,10 +21,10 @@ class Map:
         self.tilewidth: int = 1
         self.tileheight: int = 1
         self.nextobjectid: int = 1
-        self.properties: List[Property] = []
-        self.tilesets: List[Tileset] = []
-        self.layers: List[Layer] = []
-        self.objectgroups: List[ObjectGroup] = []
+        self.properties: dict[str, Any] = {}
+        self.tilesets: list[Tileset] = []
+        self.layers: list[Layer] = []
+        self.objectgroups: list[ObjectGroup] = []
         if path and os.path.exists(path):
             self.load(path)
 
@@ -40,10 +40,7 @@ class Map:
         self.tilewidth = int(root.get("tilewidth", 1))
         self.tileheight = int(root.get("tileheight", 1))
         self.nextobjectid = int(root.get("nextobjectid", 1))
-        props_elem = root.find("properties")
-        if props_elem is not None:
-            for prop_elem in props_elem.findall("property"):
-                self.properties.append(Property.from_xml(prop_elem))
+        self.properties = properties_from_xml(root.find("properties"))
         self.tilesets = [Tileset.from_xml(ts_elem) for ts_elem in root.findall("tileset")]
         self.layers = []
         for layer_elem in root.findall("layer"):
@@ -55,7 +52,7 @@ class Map:
             self.objectgroups.append(og)
         return self
 
-    def save(self, path: Optional[str] = None, encoding: str = "utf-8", indent: Optional[int] = None) -> None:
+    def save(self, path: str | None = None, encoding: str = "utf-8", indent: int | None = None) -> None:
         out_path = path or self.path
         if out_path is None:
             raise ValueError("No save path specified")
@@ -70,9 +67,7 @@ class Map:
             "nextobjectid": str(self.nextobjectid)
         })
         if self.properties:
-            props_elem = ET.SubElement(root, "properties")
-            for prop in self.properties:
-                prop.to_xml(props_elem)
+            root.append(properties_to_xml(self.properties))
         for ts in self.tilesets:
             root.append(ts.to_xml())
         for layer in self.layers:
@@ -83,12 +78,6 @@ class Map:
             ET.indent(root, space=" " * indent)
         tree = ET.ElementTree(root)
         tree.write(out_path, encoding=encoding, xml_declaration=True)
-
-    def property(self, name: str) -> Property:
-        try:
-            return next(prop for prop in self.properties if prop.name == name)
-        except StopIteration:
-            raise KeyError(f"Property '{name}' not found")
 
     def layer(self, name: str) -> Layer:
         try:
@@ -103,19 +92,19 @@ class Map:
             raise KeyError(f"ObjectGroup '{name}' not found")
 
 
-    def get_tileset_by_gid(self, gid: int) -> Optional[Tileset]:
+    def get_tileset_by_gid(self, gid: int) -> Tileset | None:
         for ts in self.tilesets:
             if ts.firstgid <= gid < ts.firstgid + ts.tilecount:
                 return ts
         return None
 
-    def get_tile_by_gid(self, gid: int) -> Optional[Tile]:
+    def get_tile_by_gid(self, gid: int) -> Tile | None:
         ts = self.get_tileset_by_gid(gid)
         if ts:
             return ts.get_tile(gid)
         return None
 
-    def allocate_ids(self, count: int = 1) -> List[int]:
+    def allocate_ids(self, count: int = 1) -> list[int]:
         ids = list(range(self.nextobjectid, self.nextobjectid + count))
         self.nextobjectid += count
         return ids
@@ -129,7 +118,7 @@ class Map:
         width: int = 256,
         height: int = 256,
         tile_size: int = 1,
-        layer_names: Optional[List[str]] = None
+        layer_names: list[str] | None = None
     ) -> 'Map':
         m = cls()
         m.width = width

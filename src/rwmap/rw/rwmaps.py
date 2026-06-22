@@ -31,7 +31,7 @@ class RwMap(Map):
                 visible=True,
                 offsetx=0.0,
                 offsety=0.0,
-                properties=None,
+                properties={},
             )
             self.objectgroups.append(og)
         else:

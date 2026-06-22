@@ -1,11 +1,11 @@
 import xml.etree.ElementTree as ET
-from typing import List, Optional, Tuple, Iterator
+from typing import Iterator, Any
 import base64
 import gzip
 import zlib
 import struct
 
-from .properties import Property
+from .properties import properties_from_xml, properties_to_xml
 
 
 class Layer:
@@ -15,14 +15,14 @@ class Layer:
         name: str,
         width: int,
         height: int,
-        data: Optional[List[int]] = None,
+        data: list[int] | None = None,
         encoding: str = "base64",
-        compression: Optional[str] = "gzip",
+        compression: str | None = "gzip",
         opacity: float = 1.0,
         visible: bool = True,
         offsetx: float = 0.0,
         offsety: float = 0.0,
-        properties: Optional[List[Property]] = None,
+        properties: dict[str, Any] = {},
     ):
         self.name = name
         self.width = width
@@ -33,28 +33,22 @@ class Layer:
         self.visible = visible
         self.offsetx = offsetx
         self.offsety = offsety
-        self.properties = properties or []
+        self.properties = properties
         self.data = data[:] if data is not None else [0] * (width * height)
 
-    def property(self, name: str) -> Property:
-        try:
-            return next(prop for prop in self.properties if prop.name == name)
-        except StopIteration:
-            raise KeyError(f"Property '{name}' not found")
-
-    def get_tile(self, key: Tuple[int, int]) -> int:
+    def get_tile(self, key: tuple[int, int]) -> int:
         x, y = key
         if not (0 <= x < self.width and 0 <= y < self.height):
             raise IndexError(f"坐标 ({x}, {y}) 超出范围")
         return self.data[y * self.width + x]
 
-    def set_tile(self, key: Tuple[int, int], value: int) -> None:
+    def set_tile(self, key: tuple[int, int], value: int) -> None:
         x, y = key
         if not (0 <= x < self.width and 0 <= y < self.height):
             raise IndexError(f"坐标 ({x}, {y}) 超出范围")
         self.data[y * self.width + x] = value
 
-    def __iter__(self) -> Iterator[Tuple[int, int, int]]:
+    def __iter__(self) -> Iterator[tuple[int, int, int]]:
         for y in range(self.height):
             for x in range(self.width):
                 yield x, y, self.data[y * self.width + x]
@@ -62,7 +56,7 @@ class Layer:
     def fill(self, tile_id: int) -> None:
         self.data = [tile_id] * (self.width * self.height)
 
-    def reencode(self, encoding: str, compression: Optional[str] = None) -> 'Layer':
+    def reencode(self, encoding: str, compression: str | None = None) -> 'Layer':
         self.encoding = encoding
         self.compression = compression
         return self
@@ -102,11 +96,7 @@ class Layer:
             data = list(struct.unpack(fmt, raw))
         else:
             raise NotImplementedError(f"Encoding {encoding} not supported")
-        props = []
-        props_elem = elem.find("properties")
-        if props_elem is not None:
-            for prop_elem in props_elem.findall("property"):
-                props.append(Property.from_xml(prop_elem))
+        props = properties_from_xml(elem.find("properties"))
         return cls(name, width, height, data, encoding, compression,
                    opacity, visible, offsetx, offsety, props)
 
@@ -122,9 +112,7 @@ class Layer:
             attrs["offsety"] = str(self.offsety)
         elem = ET.Element("layer", attrs)
         if self.properties:
-            props_elem = ET.SubElement(elem, "properties")
-            for prop in self.properties:
-                prop.to_xml(props_elem)
+            elem.append(properties_to_xml(self.properties))
         data_elem = ET.SubElement(elem, "data", {"encoding": self.encoding})
         if self.compression:
             data_elem.set("compression", self.compression)

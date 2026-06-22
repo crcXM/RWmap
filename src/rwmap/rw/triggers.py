@@ -1,6 +1,5 @@
-from typing import List, Optional, Union, Any
+from typing import Any
 
-from ..properties import Property
 from ..objects import Shape, Object
 from .units import UnitSpec
 
@@ -17,11 +16,11 @@ class Trigger(Object):
         height: float = 20,
         rotation: float = 0,
         visible: bool = True,
-        shape: Optional[Shape] = None,
-        gid: Optional[int] = None,
-        text: Optional[str] = None,
-        properties: Optional[List[Property]] = None,
-        id: Optional[int] = None,
+        shape: Shape | None = None,
+        gid: int | None = None,
+        text: str | None = None,
+        properties: dict[str, Any] = {},
+        id: int | None = None,
     ):
         super().__init__(name, type, x, y, width, height, rotation, visible,
                          shape, gid, text, properties, id)
@@ -30,7 +29,7 @@ class Trigger(Object):
         super().set(**kwargs)
         return self
 
-    def spawn(self, units_spec: Union[str, UnitSpec]) -> 'Trigger':
+    def spawn(self, units_spec: str | UnitSpec) -> 'Trigger':
         if isinstance(units_spec, UnitSpec):
             return self.set(spawnUnits=str(units_spec))
         return self.set(spawnUnits=units_spec)
