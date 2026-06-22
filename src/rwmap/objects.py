@@ -49,7 +49,7 @@ class Object:
         self.shape = shape
         self.gid = gid
         self.text = text
-        self.properties = properties
+        self.properties = properties.copy()
 
     def set(self, **kwargs: Any) -> 'Object':
         for k, v in kwargs.items():
@@ -165,7 +165,7 @@ class ObjectGroup:
         self.visible = visible
         self.offsetx = offsetx
         self.offsety = offsety
-        self.properties = properties
+        self.properties = properties.copy()
 
     def add(self, obj: Object) -> 'ObjectGroup':
         self.objects.append(obj)

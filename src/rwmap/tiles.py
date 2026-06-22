@@ -18,7 +18,7 @@ class Tile:
         image_trans: str | None = None,
     ):
         self.id = id
-        self.properties = properties
+        self.properties = properties.copy()
         self.terrain = terrain
         self.probability = probability
         self.image = image
@@ -94,7 +94,7 @@ class Tileset:
         self.image_height = image_height
         self.image_trans = image_trans
         self.is_image_collection = is_image_collection
-        self.properties = properties
+        self.properties = properties.copy()
         self.tiles: dict[int, Tile] = {}
 
     def add_tile(self, tile: Tile) -> 'Tileset':

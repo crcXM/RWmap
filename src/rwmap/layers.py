@@ -33,7 +33,7 @@ class Layer:
         self.visible = visible
         self.offsetx = offsetx
         self.offsety = offsety
-        self.properties = properties
+        self.properties = properties.copy()
         self.data = data[:] if data is not None else [0] * (width * height)
 
     def get_tile(self, key: tuple[int, int]) -> int:

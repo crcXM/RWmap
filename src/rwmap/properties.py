@@ -28,7 +28,7 @@ def property_to_xml(name: str, value: Any) -> ET.Element:
 
 def property_from_xml(elem: ET.Element) -> tuple[str, Any]:
     name = elem.get("name", "")
-    raw = elem.get("value") or (elem.text or "").strip() or None
+    raw = elem.text if (v := elem.get("value")) is None else v
     if raw is None:
         return (name, None)
     
@@ -44,13 +44,13 @@ def property_from_xml(elem: ET.Element) -> tuple[str, Any]:
     return (name, val)
 
 
-def properties_to_xml(properties: dict[str, str]) -> ET.Element:
+def properties_to_xml(properties: dict[str, Any]) -> ET.Element:
     elem = ET.Element("properties")
     for name, value in properties.items():
         elem.append(property_to_xml(name, value))
     return elem
 
-def properties_from_xml(elem: ET.Element | None) -> dict[str, str]:
+def properties_from_xml(elem: ET.Element | None) -> dict[str, Any]:
     if elem == None:
         return {}
     return dict(property_from_xml(prop) for prop in elem.findall("property"))
