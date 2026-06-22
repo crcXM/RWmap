@@ -1,4 +1,4 @@
-from typing import List, Optional, cast
+from typing import cast
 
 from .triggers import Trigger
 from ..objects import Object, ObjectGroup
@@ -8,24 +8,24 @@ from ..maps import Map
 
 class RwMap(Map):
 
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: str | None = None) -> None:
         super().__init__(path=path)
 
     @property
-    def triggers(self) -> List[Trigger]:
-        og = self.objectgroup("Triggers")
+    def triggers(self) -> list[Trigger]:
+        og = self.get_objectgroup("Triggers")
         if og is None:
             og = ObjectGroup(name="Triggers", objects=[])
             self.objectgroups.append(og)
-        return cast(List[Trigger], og.objects)
+        return cast(list[Trigger], og.objects)
 
     @triggers.setter
-    def triggers(self, triggers: List[Trigger]) -> None:
-        og = self.objectgroup("Triggers")
+    def triggers(self, triggers: list[Trigger]) -> None:
+        og = self.get_objectgroup("Triggers")
         if og is None:
             og = ObjectGroup(
                 name="Triggers",
-                objects=cast(List[Object], triggers),
+                objects=cast(list[Object], triggers),
                 color=None,
                 opacity=1.0,
                 visible=True,
@@ -35,19 +35,19 @@ class RwMap(Map):
             )
             self.objectgroups.append(og)
         else:
-            og.objects = cast(List[Object], triggers)
+            og.objects = cast(list[Object], triggers)
 
     @property
-    def ground(self) -> Optional[Layer]:
-        return self.layer("Ground")
+    def ground(self) -> Layer | None:
+        return self.get_layer("Ground")
 
     @property
-    def items(self) -> Optional[Layer]:
-        return self.layer("Items")
+    def items(self) -> Layer | None:
+        return self.get_layer("Items")
 
     @property
-    def units(self) -> Optional[Layer]:
-        return self.layer("Units")
+    def units(self) -> Layer | None:
+        return self.get_layer("Units")
 
     @classmethod
     def create_empty(
@@ -55,7 +55,7 @@ class RwMap(Map):
         width: int = 256,
         height: int = 256,
         tile_size: int = 20,
-        layer_names: Optional[List[str]] = None,
+        layer_names: list[str] | None = None,
     ) -> "RwMap":
         if layer_names is None:
             layer_names = ["Ground", "Items", "Units", "Set"]
